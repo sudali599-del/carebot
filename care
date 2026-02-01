@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ESP8266 WiFi Car</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { text-align:center; font-family:Arial; background:#f0f0f0; }
+    button {
+      width:80px; height:80px;
+      font-size:35px;
+      margin:10px;
+      border:none;
+      border-radius:20px;
+      background:#4CAF50;
+      color:white;
+    }
+    .stop { background:red; }
+  </style>
+  <script>
+    const FIREBASE_URL = "https://YOUR_FIREBASE_PROJECT.firebaseio.com/";
+
+    // Send command to Firebase
+    function sendCommand(cmd){
+      fetch(FIREBASE_URL + "command.json", {
+        method: "PUT",
+        body: JSON.stringify(cmd)
+      });
+    }
+
+    // Update speed in Firebase
+    function setSpeed(v){
+      fetch(FIREBASE_URL + "speed.json", {
+        method: "PUT",
+        body: JSON.stringify(Number(v))
+      });
+    }
+
+    // Fetch sensor data every second
+    setInterval(()=>{
+      fetch(FIREBASE_URL + "sensors.json")
+        .then(r=>r.json())
+        .then(d=>{
+          document.getElementById("dist").innerText = d.distance;
+          document.getElementById("pir").innerText  = d.pir ? "Motion" : "No Motion";
+          document.getElementById("gas").innerText  = d.gas;
+        }).catch(()=>{});
+    },1000);
+  </script>
+</head>
+<body>
+
+<h2>🚗 ESP8266 WiFi Car 🚗</h2>
+
+<!-- CAMERA STREAM -->
+<img src="http://192.168.4.2:4747/video" width="320"><br><br>
+
+<!-- CAR CONTROLS -->
+<button onmousedown="sendCommand('forward')" onmouseup="sendCommand('stop')">⬆️</button><br>
+<button onmousedown="sendCommand('left')" onmouseup="sendCommand('stop')">⬅️</button>
+<button class="stop" onclick="sendCommand('stop')">⏹</button>
+<button onmousedown="sendCommand('right')" onmouseup="sendCommand('stop')">➡️</button><br>
+<button onmousedown="sendCommand('backward')" onmouseup="sendCommand('stop')">🔄</button>
+
+<h3>⚡ Speed</h3>
+<input type="range" min="200" max="1023" value="800" step="50" oninput="setSpeed(this.value)">
+
+<h3>📡 Sensors</h3>
+Distance: <span id="dist">--</span> cm<br>
+PIR: <span id="pir">--</span><br>
+Gas: <span id="gas">--</span>
+
+</body>
+</html>
